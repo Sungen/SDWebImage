@@ -130,7 +130,7 @@ static NSString *const kCompletedCallbackKey = @"completed";
     _operationClass = operationClass ?: [SDWebImageDownloaderOperation class];
 }
 
-- (id <SDWebImageOperation>)downloadImageWithURL:(NSURL *)url options:(SDWebImageDownloaderOptions)options progress:(SDWebImageDownloaderProgressBlock)progressBlock completed:(SDWebImageDownloaderCompletedBlock)completedBlock {
+- (id <SDWebImageOperation>)downloadImageWithURL:(NSURL *)url options:(SDWebImageDownloaderOptions)options targetSize:(CGSize)targetSize progress:(SDWebImageDownloaderProgressBlock)progressBlock completed:(SDWebImageDownloaderCompletedBlock)completedBlock {
     __block SDWebImageDownloaderOperation *operation;
     __weak __typeof(self)wself = self;
 
@@ -153,6 +153,7 @@ static NSString *const kCompletedCallbackKey = @"completed";
         operation = [[wself.operationClass alloc] initWithRequest:request
                                                         inSession:self.session
                                                           options:options
+                                                       targetSize:targetSize
                                                          progress:^(NSInteger receivedSize, NSInteger expectedSize) {
                                                              SDWebImageDownloader *sself = wself;
                                                              if (!sself) return;

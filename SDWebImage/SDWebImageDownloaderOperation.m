@@ -41,6 +41,8 @@ NSString *const SDWebImageDownloadFinishNotification = @"SDWebImageDownloadFinis
 @property (assign, nonatomic) UIBackgroundTaskIdentifier backgroundTaskId;
 #endif
 
+@property (assign, nonatomic) CGSize  targetSize;
+
 @end
 
 @implementation SDWebImageDownloaderOperation {
@@ -54,6 +56,7 @@ NSString *const SDWebImageDownloadFinishNotification = @"SDWebImageDownloadFinis
 
 - (id)initWithRequest:(NSURLRequest *)request
               options:(SDWebImageDownloaderOptions)options
+           targetSize:(CGSize)targetSize
              progress:(SDWebImageDownloaderProgressBlock)progressBlock
             completed:(SDWebImageDownloaderCompletedBlock)completedBlock
             cancelled:(SDWebImageNoParamsBlock)cancelBlock {
@@ -61,6 +64,7 @@ NSString *const SDWebImageDownloadFinishNotification = @"SDWebImageDownloadFinis
     return [self initWithRequest:request
                        inSession:nil
                          options:options
+                      targetSize:targetSize
                         progress:progressBlock
                        completed:completedBlock
                        cancelled:cancelBlock];
@@ -69,6 +73,7 @@ NSString *const SDWebImageDownloadFinishNotification = @"SDWebImageDownloadFinis
 - (id)initWithRequest:(NSURLRequest *)request
             inSession:(NSURLSession *)session
               options:(SDWebImageDownloaderOptions)options
+           targetSize:(CGSize)targetSize
              progress:(SDWebImageDownloaderProgressBlock)progressBlock
             completed:(SDWebImageDownloaderCompletedBlock)completedBlock
             cancelled:(SDWebImageNoParamsBlock)cancelBlock {
@@ -84,6 +89,7 @@ NSString *const SDWebImageDownloadFinishNotification = @"SDWebImageDownloadFinis
         _expectedSize = 0;
         _unownedSession = session;
         responseFromCached = YES; // Initially wrong until `- URLSession:dataTask:willCacheResponse:completionHandler: is called or not called
+        _targetSize = targetSize;
     }
     return self;
 }
@@ -344,7 +350,7 @@ didReceiveResponse:(NSURLResponse *)response
                 NSString *key = [[SDWebImageManager sharedManager] cacheKeyForURL:self.request.URL];
                 UIImage *scaledImage = [self scaledImageForKey:key image:image];
                 if (self.shouldDecompressImages) {
-                    image = [UIImage decodedImageWithImage:scaledImage targetSize:CGSizeZero];
+                    image = [UIImage decodedImageWithImage:scaledImage targetSize:_targetSize];
                 }
                 else {
                     image = scaledImage;
@@ -419,7 +425,7 @@ didReceiveResponse:(NSURLResponse *)response
                 // Do not force decoding animated GIFs
                 if (!image.images) {
                     if (self.shouldDecompressImages) {
-                        image = [UIImage decodedImageWithImage:image targetSize:CGSizeZero];
+                        image = [UIImage decodedImageWithImage:image targetSize:_targetSize];
                     }
                 }
                 if (CGSizeEqualToSize(image.size, CGSizeZero)) {
