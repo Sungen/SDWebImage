@@ -62,6 +62,19 @@
 - (void)sd_setImageWithURL:(NSURL *)url;
 
 /**
+ * Get the target image Size
+ */
+- (CGSize)sd_targetSize;
+
+/**
+ * Set the imageView 'image' with 'targetSize'
+ * the download is asynchronous and cached.
+ *
+ * @param targetSize The targetSize for the image
+ */
+- (void)sd_setImageWithTargetSize:(CGSize)targetSize;
+
+/**
  * Set the imageView `image` with an `url` and a placeholder.
  *
  * The download is asynchronous and cached.

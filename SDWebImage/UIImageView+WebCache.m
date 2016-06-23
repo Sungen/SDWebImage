@@ -11,6 +11,7 @@
 #import "UIView+WebCacheOperation.h"
 
 static char imageURLKey;
+static char targetSizeKey;
 static char TAG_ACTIVITY_INDICATOR;
 static char TAG_ACTIVITY_STYLE;
 static char TAG_ACTIVITY_SHOW;
@@ -19,6 +20,12 @@ static char TAG_ACTIVITY_SHOW;
 
 - (void)sd_setImageWithURL:(NSURL *)url {
     [self sd_setImageWithURL:url placeholderImage:nil options:0 progress:nil completed:nil];
+}
+
+- (void)sd_setImageWithTargetSize:(CGSize)targetSize
+{
+    NSAssert(targetSize.width >= 0 && targetSize.height >= 0, @"targetSize width or height less than zero");
+    objc_setAssociatedObject(self, &targetSizeKey, [NSValue valueWithCGSize:targetSize], OBJC_ASSOCIATION_ASSIGN);
 }
 
 - (void)sd_setImageWithURL:(NSURL *)url placeholderImage:(UIImage *)placeholder {
@@ -104,6 +111,13 @@ static char TAG_ACTIVITY_SHOW;
 
 - (NSURL *)sd_imageURL {
     return objc_getAssociatedObject(self, &imageURLKey);
+}
+
+- (CGSize)sd_targetSize
+{
+    NSValue *valueSize = objc_getAssociatedObject(self, &targetSizeKey);
+    if (!valueSize) return CGSizeZero;
+    return [valueSize CGSizeValue];
 }
 
 - (void)sd_setAnimationImagesWithURLs:(NSArray *)arrayOfURLs {

@@ -12,7 +12,7 @@
 
 @implementation UIImage (ForceDecode)
 
-+ (UIImage *)decodedImageWithImage:(UIImage *)image {
++ (UIImage *)decodedImageWithImage:(UIImage *)image targetSize:(CGSize)targetSize{
     // while downloading huge amount of images
     // autorelease the bitmap context
     // and all vars to help system to free memory
@@ -55,11 +55,27 @@
         
         size_t width = CGImageGetWidth(imageRef);
         size_t height = CGImageGetHeight(imageRef);
-        NSUInteger bytesPerPixel = 4;
-        NSUInteger bytesPerRow = bytesPerPixel * width;
-        NSUInteger bitsPerComponent = 8;
+        
+        // 对大小进行限制 4k范围
+        size_t xwidth = targetSize.width?targetSize.width:4096;
+        size_t xheight = targetSize.height?targetSize.height:2160;
+        UIInterfaceOrientation ori = [UIApplication sharedApplication].statusBarOrientation;
+        if (ori == UIInterfaceOrientationPortrait
+            || ori == UIInterfaceOrientationPortraitUpsideDown) {
+            size_t temp = xwidth;
+            xheight = xwidth;
+            xwidth = temp;
+        }
+        if (width * height > xwidth * xheight) {
+            CGFloat wradio = width/xwidth;
+            CGFloat hradio = height/xheight;
+            CGFloat radio = MAX(1.0, MIN(wradio, hradio));
+            width /= radio;
+            height /= radio;
+        }
 
-
+        size_t bitsPerComponent = CGImageGetBitsPerComponent(imageRef);
+        size_t bytesPerRow = CGImageGetBytesPerRow(imageRef);
         // kCGImageAlphaNone is not supported in CGBitmapContextCreate.
         // Since the original image here has no alpha info, use kCGImageAlphaNoneSkipLast
         // to create bitmap graphics contexts without alpha info.
@@ -70,19 +86,18 @@
                                                      bytesPerRow,
                                                      colorspaceRef,
                                                      kCGBitmapByteOrderDefault|kCGImageAlphaNoneSkipLast);
-        
-        // Draw the image into the context and retrieve the new bitmap image without alpha
-        CGContextDrawImage(context, CGRectMake(0, 0, width, height), imageRef);
-        CGImageRef imageRefWithoutAlpha = CGBitmapContextCreateImage(context);
-        UIImage *imageWithoutAlpha = [UIImage imageWithCGImage:imageRefWithoutAlpha
-                                                         scale:image.scale
-                                                   orientation:image.imageOrientation];
-        
         if (unsupportedColorSpace) {
             CGColorSpaceRelease(colorspaceRef);
         }
         
+        // Draw the image into the context and retrieve the new bitmap image without alpha
+        CGContextDrawImage(context, CGRectMake(0, 0, width, height), imageRef);
+        CGImageRef imageRefWithoutAlpha = CGBitmapContextCreateImage(context);
         CGContextRelease(context);
+        
+        UIImage *imageWithoutAlpha = [UIImage imageWithCGImage:imageRefWithoutAlpha
+                                                         scale:image.scale
+                                                   orientation:image.imageOrientation];
         CGImageRelease(imageRefWithoutAlpha);
         
         return imageWithoutAlpha;
